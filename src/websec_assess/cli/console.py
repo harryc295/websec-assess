@@ -70,8 +70,44 @@ COMMAND_OVERVIEW: list[tuple[str, str, str]] = [
     ("plugins", "List every registered check/plugin.", "websec-assess plugins [--category recon|content_discovery|vuln_assessment|injection|...]"),
     ("list", "List past scans.", "websec-assess list"),
     ("menu", "Interactive menu -- also launched by running with no arguments.", "websec-assess menu"),
+    ("guide", "Explain what scan depth, politeness, and injection probes actually mean.", "websec-assess guide"),
     ("help", "Show this overview.", "websec-assess help"),
 ]
+
+
+def print_guide() -> None:
+    console.print("[bold cyan]Guide[/]")
+    console.print()
+    console.print("[bold]Scan depth[/] (light / full / everything -> quick / standard / deep)")
+    console.print("  Controls wordlist sizes, crawl depth, and Wayback/port-scan limits.")
+    console.print("  light:      fastest, smallest wordlists, no port scanning or nuclei templates.")
+    console.print("  full:       the default -- bigger wordlists, port scanning + nuclei if installed.")
+    console.print("  everything: largest wordlists/limits, deepest crawl.")
+    console.print()
+    console.print("[bold]Shared/third-party vs. your own infrastructure[/]")
+    console.print("  'shared' keeps the default polite rate limit (5 req/s) -- use this for anything")
+    console.print("  you don't fully own, e.g. scanme.nmap.org (explicitly open for tool testing, but")
+    console.print("  the published policy still asks you not to hammer it or attack it).")
+    console.print("  'own' raises the rate limit/concurrency -- only for infrastructure you control.")
+    console.print()
+    console.print("[bold]Active injection-indicator checks[/] (off by default)")
+    console.print("  Sends mutated parameters to probe for XSS/SQLi/CmdI/SSTI/path traversal/XXE/open")
+    console.print("  redirect. Detection-only (see SECURITY.md), but it does mutate requests against the")
+    console.print("  live target -- only enable this for systems you own or have explicit permission for")
+    console.print("  the most invasive testing. Most third-party 'please test me' targets do NOT cover this.")
+    console.print()
+    console.print("[bold]Authorisation[/]")
+    console.print("  Every scan refuses to send a single request unless you confirm authorisation")
+    console.print("  (the interactive prompt, or --i-have-authorization / safety.authorized in config).")
+    console.print("  Have a signed engagement letter, a bug bounty program's published scope, your own")
+    console.print("  lab, a CTF, or (for scanme.nmap.org specifically) the host's own published policy.")
+    console.print()
+    console.print("[bold]Picking specific tools instead of a whole profile[/]")
+    console.print("  Enter a category name (recon, content_discovery, vuln_assessment, api_security,")
+    console.print("  auth_access, cloud_infra, passive_intel, integrations, injection) to run every")
+    console.print("  plugin in it, an exact plugin name (e.g. recon.dns_enum), or a comma-separated mix.")
+    console.print()
+    console.print("[dim]See `websec-assess help` for the full command/flag reference.[/]")
 
 
 def print_commands_overview() -> None:

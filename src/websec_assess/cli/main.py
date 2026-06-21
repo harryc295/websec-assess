@@ -15,6 +15,7 @@ from websec_assess.cli.console import (
     console,
     err_console,
     print_commands_overview,
+    print_guide,
     print_plugins_table,
     print_scan_summary,
     print_scans_table,
@@ -141,11 +142,14 @@ def expand_plugin_selection(entries: list[str], all_plugins: list[type[Plugin]])
     return sorted(selected), unknown
 
 
-def _interactive_scan_setup(args: argparse.Namespace) -> bool:
+def _interactive_scan_setup(args: argparse.Namespace, config: AppConfig) -> bool:
     """Walks through target/depth/tool-selection with prompts instead of
     requiring flags up front -- triggered by running `scan` with no target.
-    Returns False if the user backs out (e.g. won't confirm authorisation)."""
-    console.print("[bold cyan]Interactive scan setup[/]")
+    Mutates `config` (rate limit, active_injection_probes) in place since
+    those aren't argparse fields. Returns False if the user backs out (e.g.
+    won't confirm authorisation). See `websec-assess guide` for what each
+    choice here actually means."""
+    console.print("[bold cyan]Interactive scan setup[/]  [dim](run `websec-assess guide` for an explanation of these choices)[/]")
     console.print("[dim]Tip: pass arguments directly next time to skip this, e.g.:[/]")
     console.print("[dim]  websec-assess scan https://target.example --profile quick --i-have-authorization[/]")
     console.print()
@@ -157,8 +161,23 @@ def _interactive_scan_setup(args: argparse.Namespace) -> bool:
         err_console.print("[red]No target entered -- aborting.[/]")
         return False
 
-    depth = Prompt.ask("Scan depth", choices=list(_DEPTH_TO_PROFILE), default="full")
+    depth = Prompt.ask("Scan depth: light / full / everything", choices=list(_DEPTH_TO_PROFILE), default="full")
     args.profile = _DEPTH_TO_PROFILE[depth]
+
+    ownership = Prompt.ask(
+        "Is this a shared/third-party-authorised target (be polite) or your own infrastructure (can go faster)?",
+        choices=["shared", "own"], default="shared",
+    )
+    if ownership == "own":
+        config.rate_limit.requests_per_second = max(config.rate_limit.requests_per_second, 20.0)
+        config.rate_limit.burst = max(config.rate_limit.burst, 40)
+        config.rate_limit.concurrency = max(config.rate_limit.concurrency, 20)
+
+    config.safety.active_injection_probes = Confirm.ask(
+        "Enable active injection-indicator checks (XSS/SQLi/CmdI/SSTI/path traversal/XXE/open redirect)? "
+        "Only for targets you own or have explicit permission for the most invasive testing",
+        default=False,
+    )
 
     PluginRegistry.discover()
     all_plugins = PluginRegistry.all()
@@ -237,11 +256,11 @@ def _print_next_steps(scan_id: str) -> None:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    if not args.target:
-        if not _interactive_scan_setup(args):
-            return 1
     configure_logging(level=args.log_level)
     config = AppConfig.load(args.config)
+    if not args.target:
+        if not _interactive_scan_setup(args, config):
+            return 1
     if args.dry_run:
         config.safety.dry_run = True
     if args.target not in config.scope.allowed_hosts:
@@ -332,13 +351,19 @@ def cmd_help(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_guide(args: argparse.Namespace) -> int:
+    print_guide()
+    return 0
+
+
 _MENU_OPTIONS = [
     ("1", "Run a scan (prompts you for target/depth/tools)"),
     ("2", "List registered plugins/checks"),
     ("3", "List past scans"),
     ("4", "View/open a past report"),
     ("5", "Show full command reference"),
-    ("6", "Exit"),
+    ("6", "Guide -- what the scan choices actually mean"),
+    ("7", "Exit"),
 ]
 
 
@@ -376,6 +401,8 @@ def cmd_menu(args: argparse.Namespace) -> int:
             cmd_report(argparse.Namespace(scan_id=resolved, format="html", output_dir=None, config=args.config, open=True))
         elif choice == "5":
             cmd_help(args)
+        elif choice == "6":
+            cmd_guide(args)
         else:
             break
     return 0
@@ -427,6 +454,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_help = sub.add_parser("help", help="Show every command and its options")
     p_help.set_defaults(func=cmd_help)
+
+    p_guide = sub.add_parser("guide", help="Explain what the scan choices (depth, politeness, injection probes) mean")
+    p_guide.set_defaults(func=cmd_guide)
 
     p_menu = sub.add_parser("menu", help="Interactive menu (also launched by running with no arguments)")
     p_menu.set_defaults(func=cmd_menu)

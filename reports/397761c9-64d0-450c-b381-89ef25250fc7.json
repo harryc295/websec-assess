@@ -1,0 +1,706 @@
+{
+  "scan": {
+    "id": "397761c9-64d0-450c-b381-89ef25250fc7",
+    "target": {
+      "base_url": "http://scanme.nmap.org",
+      "host": "scanme.nmap.org",
+      "notes": ""
+    },
+    "profile": "quick",
+    "status": "completed",
+    "plugins_planned": [
+      "recon.dns_enum",
+      "recon.endpoint_discovery",
+      "recon.header_analysis",
+      "recon.historical_urls",
+      "recon.http_fingerprint",
+      "recon.robots_sitemap",
+      "recon.subdomain_enum",
+      "recon.tech_detection",
+      "recon.asset_inventory",
+      "integrations.dnsx",
+      "integrations.gau",
+      "integrations.httpx",
+      "integrations.katana",
+      "integrations.subfinder",
+      "integrations.waybackurls",
+      "passive_intel.certificate_transparency",
+      "content_discovery.api_endpoint_id",
+      "content_discovery.directory_discovery",
+      "content_discovery.file_discovery",
+      "content_discovery.js_analysis",
+      "content_discovery.parameter_discovery",
+      "content_discovery.secret_detection",
+      "vuln_assessment.auth_assessment",
+      "vuln_assessment.cookie_analysis",
+      "vuln_assessment.cors_analysis",
+      "vuln_assessment.csp_analysis",
+      "vuln_assessment.misconfiguration",
+      "vuln_assessment.security_headers",
+      "vuln_assessment.session_management",
+      "vuln_assessment.tls_analysis",
+      "api_security.graphql_discovery",
+      "api_security.openapi_parser",
+      "auth_access.mfa_detection",
+      "cloud_infra.cicd_exposure",
+      "cloud_infra.container_exposure",
+      "cloud_infra.exposed_storage_discovery"
+    ],
+    "plugins_completed": [
+      "recon.tech_detection",
+      "recon.http_fingerprint",
+      "recon.header_analysis",
+      "recon.dns_enum",
+      "recon.robots_sitemap",
+      "recon.endpoint_discovery",
+      "recon.subdomain_enum",
+      "recon.historical_urls",
+      "recon.asset_inventory",
+      "integrations.dnsx",
+      "integrations.gau",
+      "integrations.httpx",
+      "integrations.katana",
+      "integrations.subfinder",
+      "integrations.waybackurls",
+      "passive_intel.certificate_transparency",
+      "content_discovery.js_analysis",
+      "content_discovery.parameter_discovery",
+      "content_discovery.secret_detection",
+      "content_discovery.api_endpoint_id",
+      "content_discovery.file_discovery",
+      "content_discovery.directory_discovery",
+      "vuln_assessment.auth_assessment",
+      "vuln_assessment.session_management",
+      "vuln_assessment.cors_analysis",
+      "vuln_assessment.csp_analysis",
+      "vuln_assessment.security_headers",
+      "vuln_assessment.cookie_analysis",
+      "vuln_assessment.tls_analysis",
+      "vuln_assessment.misconfiguration",
+      "api_security.openapi_parser",
+      "api_security.graphql_discovery",
+      "auth_access.mfa_detection",
+      "cloud_infra.exposed_storage_discovery",
+      "cloud_infra.cicd_exposure",
+      "cloud_infra.container_exposure"
+    ],
+    "started_at": "2026-06-21T22:35:46.708069",
+    "finished_at": "2026-06-21T22:36:30.891011",
+    "config_snapshot": {
+      "scope": {
+        "allowed_hosts": [
+          "scanme.nmap.org"
+        ],
+        "allowed_cidrs": []
+      },
+      "rate_limit": {
+        "requests_per_second": 5.0,
+        "burst": 10,
+        "concurrency": 10
+      },
+      "safety": {
+        "authorized": false,
+        "dry_run": false,
+        "active_injection_probes": false,
+        "audit_log_path": "audit.log"
+      },
+      "database": {
+        "url": "sqlite:///websec_assess.db"
+      },
+      "scan": {
+        "profile": "standard",
+        "output_dir": "./reports",
+        "timeout_seconds": 10.0,
+        "user_agent": "websec-assess/0.1 (+authorised-assessment)"
+      },
+      "tool_paths": {
+        "nuclei": "nuclei",
+        "katana": "katana",
+        "httpx": "httpx",
+        "subfinder": "subfinder",
+        "dnsx": "dnsx",
+        "naabu": "naabu",
+        "gau": "gau",
+        "waybackurls": "waybackurls"
+      }
+    }
+  },
+  "summary": {
+    "total_findings": 18,
+    "severity_counts": {
+      "critical": 0,
+      "high": 2,
+      "medium": 4,
+      "low": 2,
+      "info": 10
+    },
+    "total_assets": 9
+  },
+  "findings": [
+    {
+      "id": "41d1a966-fb42-4a68-9d8b-217d49b70c91",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "content_discovery.file_discovery",
+      "category": "content_discovery",
+      "title": "Sensitive file exposed: .htaccess",
+      "description": "A request for '.htaccess' responded 403 (differs from baseline 404), suggesting this sensitive file is accessible.",
+      "severity": "high",
+      "confidence": "medium",
+      "affected_url": "http://scanme.nmap.org/.htaccess",
+      "evidence": [
+        {
+          "description": "HTTP 403",
+          "request_summary": null,
+          "response_summary": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>403 Forbidden</title>\n</head><body>\n<h1>Forbidden</h1>\n<p>You don't have permission to access /.htaccess\non this server.</p>\n<hr>\n<address>Apache/2.4.7 (Ubuntu) Server at scanme.nmap.org Port 80</address>\n</body></html>\n",
+          "matched_value": ".htaccess"
+        }
+      ],
+      "remediation": "Remove the file from the web root or restrict access to it at the web server/proxy level.",
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/"
+      ],
+      "cwe": "CWE-538",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:18.545655",
+      "extra": {}
+    },
+    {
+      "id": "ed8ec979-2603-415e-a84f-8661ef7fc824",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "content_discovery.file_discovery",
+      "category": "content_discovery",
+      "title": "Sensitive file exposed: .htpasswd",
+      "description": "A request for '.htpasswd' responded 403 (differs from baseline 404), suggesting this sensitive file is accessible.",
+      "severity": "high",
+      "confidence": "medium",
+      "affected_url": "http://scanme.nmap.org/.htpasswd",
+      "evidence": [
+        {
+          "description": "HTTP 403",
+          "request_summary": null,
+          "response_summary": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>403 Forbidden</title>\n</head><body>\n<h1>Forbidden</h1>\n<p>You don't have permission to access /.htpasswd\non this server.</p>\n<hr>\n<address>Apache/2.4.7 (Ubuntu) Server at scanme.nmap.org Port 80</address>\n</body></html>\n",
+          "matched_value": ".htpasswd"
+        }
+      ],
+      "remediation": "Remove the file from the web root or restrict access to it at the web server/proxy level.",
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/"
+      ],
+      "cwe": "CWE-538",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:18.545657",
+      "extra": {}
+    },
+    {
+      "id": "4a489c71-7c06-4a42-bcbb-87af91cbfeeb",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.security_headers",
+      "category": "vuln_assessment",
+      "title": "Missing security header: content-security-policy",
+      "description": "No Content-Security-Policy header, so the browser has no defence-in-depth against injected scripts.",
+      "severity": "medium",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "Define a restrictive CSP (see plugins.vuln_assessment.csp_analysis for content-level checks once present).",
+      "references": [
+        "https://owasp.org/www-project-secure-headers/"
+      ],
+      "cwe": "CWE-1021",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:20.946634",
+      "extra": {}
+    },
+    {
+      "id": "236dd157-71d6-4676-91c5-54bec925171f",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.security_headers",
+      "category": "vuln_assessment",
+      "title": "Missing security header: x-frame-options",
+      "description": "X-Frame-Options is missing, which (absent an equivalent CSP frame-ancestors) leaves the site framable for clickjacking.",
+      "severity": "medium",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "Set 'X-Frame-Options: DENY' or a CSP 'frame-ancestors' directive.",
+      "references": [
+        "https://owasp.org/www-project-secure-headers/"
+      ],
+      "cwe": "CWE-1021",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:20.946636",
+      "extra": {}
+    },
+    {
+      "id": "a49475f0-b3c9-4444-a248-ffd3bc62eb57",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.tls_analysis",
+      "category": "vuln_assessment",
+      "title": "TLS not available on port 443",
+      "description": "Could not establish a TLS connection on port 443: [WinError 10061] No connection could be made because the target machine actively refused it",
+      "severity": "medium",
+      "confidence": "medium",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:36:22.357986",
+      "extra": {}
+    },
+    {
+      "id": "7ba3dbdc-92ab-4aa7-b947-a99ca1c4fbcf",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.misconfiguration",
+      "category": "vuln_assessment",
+      "title": "Directory listing enabled: /images/",
+      "description": "The web server returns a directory listing instead of a 403/404, disclosing the contents of this directory.",
+      "severity": "medium",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org/images/",
+      "evidence": [],
+      "remediation": "Disable autoindex/directory browsing on the web server for this path.",
+      "references": [],
+      "cwe": "CWE-548",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:22.549769",
+      "extra": {}
+    },
+    {
+      "id": "89638bf2-43ea-41a4-9e50-3979279c657b",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.http_fingerprint",
+      "category": "recon",
+      "title": "Version disclosure via server header",
+      "description": "The 'server' response header discloses specific software version information, which helps an attacker target known vulnerabilities.",
+      "severity": "low",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [
+        {
+          "description": "server: Apache/2.4.7 (Ubuntu)",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": "Apache/2.4.7 (Ubuntu)"
+        }
+      ],
+      "remediation": "Suppress or genericise version information in server response headers.",
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/"
+      ],
+      "cwe": "CWE-200",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:35:47.620491",
+      "extra": {}
+    },
+    {
+      "id": "e320e6e2-7a3f-474a-af56-5a3d0e331d15",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.security_headers",
+      "category": "vuln_assessment",
+      "title": "Missing security header: x-content-type-options",
+      "description": "X-Content-Type-Options is missing, allowing browsers to MIME-sniff responses.",
+      "severity": "low",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "Set 'X-Content-Type-Options: nosniff'.",
+      "references": [
+        "https://owasp.org/www-project-secure-headers/"
+      ],
+      "cwe": "CWE-693",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:20.946635",
+      "extra": {}
+    },
+    {
+      "id": "f67e6c6b-74a1-438c-b624-db1026bd55aa",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.tech_detection",
+      "category": "recon",
+      "title": "Technology stack identified",
+      "description": "Detected the following technologies from response signatures: Apache",
+      "severity": "info",
+      "confidence": "medium",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:47.608768",
+      "extra": {
+        "technologies": [
+          "Apache"
+        ]
+      }
+    },
+    {
+      "id": "feab09a7-33dc-456e-9f19-bdd1f6a6428a",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.http_fingerprint",
+      "category": "recon",
+      "title": "HTTP fingerprint",
+      "description": "Final response: 200. Redirect chain length: 1.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [
+        {
+          "description": "Redirect chain",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": "200 http://scanme.nmap.org"
+        }
+      ],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:47.620490",
+      "extra": {}
+    },
+    {
+      "id": "6d206a28-649a-47a9-abaf-8f8d6ac74490",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.header_analysis",
+      "category": "recon",
+      "title": "Response headers captured",
+      "description": "Captured 9 response header(s) on the base URL for evidence/timeline purposes.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [
+        {
+          "description": "date: Sun, 21 Jun 2026 22:32:36 GMT",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "server: Apache/2.4.7 (Ubuntu)",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "accept-ranges: bytes",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "vary: Accept-Encoding",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "content-encoding: gzip",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "content-length: 2068",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "keep-alive: timeout=5, max=100",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "connection: Keep-Alive",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "content-type: text/html",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        }
+      ],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:47.625681",
+      "extra": {
+        "headers": {
+          "date": "Sun, 21 Jun 2026 22:32:36 GMT",
+          "server": "Apache/2.4.7 (Ubuntu)",
+          "accept-ranges": "bytes",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "content-length": "2068",
+          "keep-alive": "timeout=5, max=100",
+          "connection": "Keep-Alive",
+          "content-type": "text/html"
+        }
+      }
+    },
+    {
+      "id": "18e34c80-c1d7-45c8-98e1-eb9a87997d24",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.dns_enum",
+      "category": "recon",
+      "title": "DNS records enumerated",
+      "description": "Resolved standard DNS record types for the target host.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [
+        {
+          "description": "A: 45.33.32.156",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        },
+        {
+          "description": "AAAA: 2600:3c01::f03c:91ff:fe18:bb2f",
+          "request_summary": null,
+          "response_summary": null,
+          "matched_value": null
+        }
+      ],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:47.727542",
+      "extra": {}
+    },
+    {
+      "id": "1579eb63-b013-4b65-8e12-762a752c8815",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.endpoint_discovery",
+      "category": "recon",
+      "title": "Endpoint discovery summary",
+      "description": "Crawled 2 page(s) (depth<=1), discovering 2 new in-scope URL(s) and 4 form(s).",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:47.778431",
+      "extra": {
+        "pages_crawled": 2,
+        "new_urls": 2,
+        "new_forms": 4
+      }
+    },
+    {
+      "id": "992bedb6-0a90-4f17-8411-a8ee97ded06e",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.subdomain_enum",
+      "category": "recon",
+      "title": "Subdomain enumeration summary",
+      "description": "Discovered 0 candidate subdomain(s) via certificate transparency and DNS brute-force.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:57.376816",
+      "extra": {
+        "count": 0
+      }
+    },
+    {
+      "id": "15a637aa-df37-418f-aed6-30009f654d9b",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "recon.asset_inventory",
+      "category": "recon",
+      "title": "Asset inventory summary",
+      "description": "0 subdomain(s), 2 URL(s), 0 JS file(s), 4 form(s), 2 technology marker(s) discovered so far.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:35:57.642605",
+      "extra": {
+        "subdomains": 0,
+        "urls": 2,
+        "js_files": 0,
+        "forms": 4,
+        "technologies": 2
+      }
+    },
+    {
+      "id": "f2bcf90f-575b-4c7b-98ec-384310f8c3d4",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "content_discovery.parameter_discovery",
+      "category": "content_discovery",
+      "title": "Parameters identified",
+      "description": "Identified 1 unique parameter name(s) from URL query strings and form inputs.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "",
+      "references": [],
+      "cwe": null,
+      "owasp": null,
+      "created_at": "2026-06-21T22:36:07.795894",
+      "extra": {
+        "parameters": [
+          "q"
+        ]
+      }
+    },
+    {
+      "id": "0d58f79d-cad5-4732-ac1a-f1afed5643d2",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.security_headers",
+      "category": "vuln_assessment",
+      "title": "Missing security header: referrer-policy",
+      "description": "Referrer-Policy is not set, so the default browser behaviour governs how much of the URL leaks to third parties.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "Set an explicit 'Referrer-Policy' (e.g. 'strict-origin-when-cross-origin').",
+      "references": [
+        "https://owasp.org/www-project-secure-headers/"
+      ],
+      "cwe": "CWE-200",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:20.946636",
+      "extra": {}
+    },
+    {
+      "id": "84f8fc54-1936-4d3d-9110-0618e355cfe2",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "plugin": "vuln_assessment.security_headers",
+      "category": "vuln_assessment",
+      "title": "Missing security header: permissions-policy",
+      "description": "Permissions-Policy is not set, leaving browser feature access (camera, geolocation, etc.) at default.",
+      "severity": "info",
+      "confidence": "high",
+      "affected_url": "http://scanme.nmap.org",
+      "evidence": [],
+      "remediation": "Set a 'Permissions-Policy' that disables features the site doesn't use.",
+      "references": [
+        "https://owasp.org/www-project-secure-headers/"
+      ],
+      "cwe": "CWE-693",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "created_at": "2026-06-21T22:36:20.946636",
+      "extra": {}
+    }
+  ],
+  "assets": [
+    {
+      "id": "f0803961-8544-496f-888d-d602fca1ecfb",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "dns_record",
+      "value": "A 45.33.32.156",
+      "source_plugin": "recon.dns_enum",
+      "first_seen": "2026-06-21T22:35:47.726601",
+      "metadata": {
+        "record_type": "A"
+      }
+    },
+    {
+      "id": "7e02d39d-dca6-4a31-ac3e-cdfd428a81f4",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "dns_record",
+      "value": "AAAA 2600:3c01::f03c:91ff:fe18:bb2f",
+      "source_plugin": "recon.dns_enum",
+      "first_seen": "2026-06-21T22:35:47.726603",
+      "metadata": {
+        "record_type": "AAAA"
+      }
+    },
+    {
+      "id": "bc270e0f-947f-4d77-bc77-a11c5fc025a7",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "parameter",
+      "value": "q",
+      "source_plugin": "content_discovery.parameter_discovery",
+      "first_seen": "2026-06-21T22:36:07.795311",
+      "metadata": {}
+    },
+    {
+      "id": "5edb5f6a-33a1-4909-bab3-0630a4d5958b",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "technology",
+      "value": "Apache",
+      "source_plugin": "recon.tech_detection",
+      "first_seen": "2026-06-21T22:35:47.607422",
+      "metadata": {}
+    },
+    {
+      "id": "55de1782-114d-4953-bc1e-fd4614d38a96",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "url",
+      "value": "http://scanme.nmap.org",
+      "source_plugin": "recon.http_fingerprint",
+      "first_seen": "2026-06-21T22:35:47.619654",
+      "metadata": {
+        "status": 200
+      }
+    },
+    {
+      "id": "06cc8584-d013-4dfb-a02b-db1bff5a99d6",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "url",
+      "value": "http://scanme.nmap.org",
+      "source_plugin": "recon.endpoint_discovery",
+      "first_seen": "2026-06-21T22:35:47.777698",
+      "metadata": {
+        "depth": 1
+      }
+    },
+    {
+      "id": "e7c713af-1706-424e-bcdc-5b625afb3518",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "url",
+      "value": "http://scanme.nmap.org/",
+      "source_plugin": "recon.endpoint_discovery",
+      "first_seen": "2026-06-21T22:35:47.777699",
+      "metadata": {
+        "depth": 1
+      }
+    },
+    {
+      "id": "6201db31-9f52-4ddb-8315-4b5dcf13be51",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "url",
+      "value": "http://scanme.nmap.org/.htaccess",
+      "source_plugin": "content_discovery.file_discovery",
+      "first_seen": "2026-06-21T22:36:18.544193",
+      "metadata": {
+        "status": 403
+      }
+    },
+    {
+      "id": "a208bf4b-d385-4417-876a-6b792d306a20",
+      "scan_id": "397761c9-64d0-450c-b381-89ef25250fc7",
+      "asset_type": "url",
+      "value": "http://scanme.nmap.org/.htpasswd",
+      "source_plugin": "content_discovery.file_discovery",
+      "first_seen": "2026-06-21T22:36:18.544195",
+      "metadata": {
+        "status": 403
+      }
+    }
+  ]
+}
