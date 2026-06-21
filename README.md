@@ -39,7 +39,14 @@ formats.
 ## Quickstart
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]"      # or: pipx install -e .   (puts websec-assess on PATH)
+websec-assess                # no arguments -> interactive menu
+websec-assess scan           # no target -> interactive wizard (target, depth, tools, auth)
+```
+
+Prefer flags/scripting over prompts:
+
+```bash
 websec-assess init --target your-target.example
 # edit websec-assess.yaml: confirm scope.allowed_hosts and safety.authorized
 websec-assess scan https://your-target.example --i-have-authorization --profile quick
@@ -51,13 +58,17 @@ Full per-OS instructions (Windows/Ubuntu/Kali/Mint/Docker): [docs/installation.m
 ## CLI
 
 ```
-websec-assess init     --target HOST [--output FILE]
-websec-assess scan     TARGET --i-have-authorization [--profile quick|standard|deep]
-                               [--plugins a,b,c] [--format json,markdown,html] [--dry-run]
-websec-assess resume   SCAN_ID
-websec-assess report   SCAN_ID [--format html] [--output-dir DIR]
-websec-assess plugins  [--category recon|content_discovery|...]
+websec-assess              interactive menu (same as running with no arguments)
+websec-assess scan         [TARGET] [--i-have-authorization] [--profile quick|standard|deep]
+                            [--plugins a,b,c] [--format json,markdown,html] [--dry-run] [--open]
+                            (omit TARGET to be prompted instead)
+websec-assess init         --target HOST [--output FILE]
+websec-assess resume       SCAN_ID
+websec-assess report       SCAN_ID [--format html] [--output-dir DIR] [--open]
+websec-assess plugins      [--category recon|content_discovery|...]
 websec-assess list
+websec-assess guide        explains scan depth, politeness, and injection probes
+websec-assess help         full command/flag reference
 ```
 
 ## Architecture
