@@ -11,7 +11,9 @@ dist/
 *.db
 *.sqlite3
 data/scans/
+/reports/
 audit.log
+websec-assess.yaml
 .env
 .coverage
 htmlcov/
