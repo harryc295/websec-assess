@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Security Assessment Report - demo.example.com</title>
+<style>
+  :root {
+    --critical: #7a1f1f; --high: #c0392b; --medium: #d68910; --low: #2471a3; --info: #566573;
+  }
+  body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 0; background: #f7f7f8; color: #1b1f23; }
+  header { background: #111418; color: #fff; padding: 24px 32px; }
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header .meta { color: #b7becb; font-size: 13px; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 32px 64px; }
+  .summary { display: flex; gap: 12px; margin: 20px 0 32px; flex-wrap: wrap; }
+  .pill { padding: 10px 16px; border-radius: 8px; color: #fff; font-weight: 600; min-width: 90px; text-align: center; }
+  .pill small { display: block; font-weight: 400; font-size: 11px; opacity: .85; }
+  .pill.critical { background: var(--critical); } .pill.high { background: var(--high); }
+  .pill.medium { background: var(--medium); } .pill.low { background: var(--low); } .pill.info { background: var(--info); }
+  .finding { background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; border-left: 5px solid #ccc; }
+  .finding.critical { border-left-color: var(--critical); } .finding.high { border-left-color: var(--high); }
+  .finding.medium { border-left-color: var(--medium); } .finding.low { border-left-color: var(--low); } .finding.info { border-left-color: var(--info); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; text-transform: uppercase; margin-right: 6px; }
+  .badge.critical { background: var(--critical); } .badge.high { background: var(--high); }
+  .badge.medium { background: var(--medium); } .badge.low { background: var(--low); } .badge.info { background: var(--info); }
+  .finding h3 { margin: 4px 0 8px; }
+  .meta-row { color: #57606a; font-size: 12.5px; margin-bottom: 10px; }
+  code { background: #f0f1f3; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  .evidence { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 10px 12px; font-size: 12.5px; margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #e1e4e8; font-size: 13px; }
+  section h2 { border-bottom: 2px solid #e1e4e8; padding-bottom: 6px; margin-top: 40px; }
+  .asset-group h4 { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Security Assessment Report</h1>
+  <div class="meta">
+    Target: https://demo.example.com &middot; Profile: standard &middot;
+    Status: completed &middot; Scan ID: efd046ef-8882-42bc-b3c5-20c168a57c11
+  </div>
+</header>
+<main>
+  <section class="summary">
+    
+    <div class="pill critical">1<small>critical</small></div>
+    
+    <div class="pill high">2<small>high</small></div>
+    
+    <div class="pill medium">2<small>medium</small></div>
+    
+    <div class="pill low">1<small>low</small></div>
+    
+    <div class="pill info">1<small>info</small></div>
+    
+  </section>
+
+  <section>
+    <h2>Findings (7)</h2>
+    
+    <div class="finding critical">
+      <span class="badge critical">critical</span>
+      <span class="badge critical" style="opacity:.7">confidence: high</span>
+      <h3>Unauthenticated Docker daemon API exposed</h3>
+      <div class="meta-row">
+        Plugin: cloud_infra.container_exposure (cloud_infra) &middot; URL: <code>http://demo.example.com:2375/version</code>
+         &middot; CWE-306
+         &middot; A05:2021-Security Misconfiguration
+      </div>
+      <p>The Docker Engine API on port 2375 responds without authentication.</p>
+      
+      <p><strong>Remediation:</strong> Never expose the Docker daemon over plain TCP without TLS client-cert auth.</p>
+      
+    </div>
+    
+    <div class="finding high">
+      <span class="badge high">high</span>
+      <span class="badge high" style="opacity:.7">confidence: medium</span>
+      <h3>SQL injection indicator on parameter 'id'</h3>
+      <div class="meta-row">
+        Plugin: injection.sqli_indicators (injection) &middot; URL: <code>https://demo.example.com/products?id=1'</code>
+         &middot; CWE-89
+         &middot; A03:2021-Injection
+      </div>
+      <p>Appending a quote character to 'id' produced a database error message not present in the baseline response, suggesting unsanitised input reaches a SQL query.</p>
+      
+      <div class="evidence">
+        
+          <div>New error signature vs. baseline &mdash; <code>you have an error in your sql syntax</code></div>
+        
+      </div>
+      
+      <p><strong>Remediation:</strong> Use parameterised queries/prepared statements exclusively.</p>
+      
+      <p><strong>References:</strong>
+        <br><code>https://owasp.org/www-community/attacks/SQL_Injection</code>
+      </p>
+      
+    </div>
+    
+    <div class="finding high">
+      <span class="badge high">high</span>
+      <span class="badge high" style="opacity:.7">confidence: low</span>
+      <h3>Potential secret exposed in JavaScript: AWS Access Key ID</h3>
+      <div class="meta-row">
+        Plugin: content_discovery.secret_detection (content_discovery) &middot; URL: <code>https://demo.example.com/static/app.js</code>
+         &middot; CWE-798
+         &middot; A07:2021-Identification and Authentication Failures
+      </div>
+      <p>A pattern matching 'AWS Access Key ID' was found in a publicly served JavaScript file.</p>
+      
+      <div class="evidence">
+        
+          <div>AWS Access Key ID &mdash; <code>AKIA****************MNOP</code></div>
+        
+      </div>
+      
+      <p><strong>Remediation:</strong> Remove hardcoded secrets from client-side code; rotate immediately.</p>
+      
+    </div>
+    
+    <div class="finding medium">
+      <span class="badge medium">medium</span>
+      <span class="badge medium" style="opacity:.7">confidence: high</span>
+      <h3>Missing security header: content-security-policy</h3>
+      <div class="meta-row">
+        Plugin: vuln_assessment.security_headers (vuln_assessment) &middot; URL: <code>https://demo.example.com</code>
+         &middot; CWE-1021
+         &middot; A05:2021-Security Misconfiguration
+      </div>
+      <p>No Content-Security-Policy header, so the browser has no defence-in-depth against injected scripts.</p>
+      
+      <p><strong>Remediation:</strong> Define a restrictive CSP.</p>
+      
+    </div>
+    
+    <div class="finding medium">
+      <span class="badge medium">medium</span>
+      <span class="badge medium" style="opacity:.7">confidence: high</span>
+      <h3>Cookie 'session' missing HttpOnly flag</h3>
+      <div class="meta-row">
+        Plugin: vuln_assessment.cookie_analysis (vuln_assessment) &middot; URL: <code>https://demo.example.com</code>
+         &middot; CWE-1004
+         &middot; A05:2021-Security Misconfiguration
+      </div>
+      <p>Cookie is readable from JavaScript, increasing impact if an XSS is found elsewhere.</p>
+      
+      <p><strong>Remediation:</strong> Set the HttpOnly attribute.</p>
+      
+    </div>
+    
+    <div class="finding low">
+      <span class="badge low">low</span>
+      <span class="badge low" style="opacity:.7">confidence: high</span>
+      <h3>Version disclosure via server header</h3>
+      <div class="meta-row">
+        Plugin: recon.http_fingerprint (recon) &middot; URL: <code>https://demo.example.com</code>
+         &middot; CWE-200
+        
+      </div>
+      <p>The 'server' response header discloses specific software version information.</p>
+      
+      <div class="evidence">
+        
+          <div>server: nginx/1.18.0 &mdash; <code>nginx/1.18.0</code></div>
+        
+      </div>
+      
+      <p><strong>Remediation:</strong> Suppress version information in server response headers.</p>
+      
+    </div>
+    
+    <div class="finding info">
+      <span class="badge info">info</span>
+      <span class="badge info" style="opacity:.7">confidence: high</span>
+      <h3>Subdomain enumeration summary</h3>
+      <div class="meta-row">
+        Plugin: recon.subdomain_enum (recon) &middot; URL: <code>https://demo.example.com</code>
+        
+        
+      </div>
+      <p>Discovered 6 candidate subdomain(s) via certificate transparency and DNS brute-force.</p>
+      
+      
+      
+    </div>
+    
+  </section>
+
+  <section>
+    <h2>Asset Inventory (6)</h2>
+    
+    <div class="asset-group">
+      <h4>subdomain (2)</h4>
+      <table>
+        
+        <tr><td><code>api.demo.example.com</code></td><td>recon.subdomain_enum</td></tr>
+        
+        <tr><td><code>staging.demo.example.com</code></td><td>recon.subdomain_enum</td></tr>
+        
+      </table>
+    </div>
+    
+    <div class="asset-group">
+      <h4>url (1)</h4>
+      <table>
+        
+        <tr><td><code>https://demo.example.com/products</code></td><td>recon.endpoint_discovery</td></tr>
+        
+      </table>
+    </div>
+    
+    <div class="asset-group">
+      <h4>technology (2)</h4>
+      <table>
+        
+        <tr><td><code>nginx</code></td><td>recon.tech_detection</td></tr>
+        
+        <tr><td><code>React</code></td><td>recon.tech_detection</td></tr>
+        
+      </table>
+    </div>
+    
+    <div class="asset-group">
+      <h4>api_endpoint (1)</h4>
+      <table>
+        
+        <tr><td><code>GET /api/v1/products</code></td><td>content_discovery.api_endpoint_id</td></tr>
+        
+      </table>
+    </div>
+    
+  </section>
+</main>
+</body>
+</html>

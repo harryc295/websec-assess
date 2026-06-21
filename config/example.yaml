@@ -1,0 +1,42 @@
+# Example: an authorised personal-lab scan against a deliberately vulnerable
+# local target (e.g. OWASP Juice Shop, DVWA), with deeper checks enabled.
+#
+#   websec-assess scan http://localhost:3000 --config config/example.yaml \
+#       --i-have-authorization --profile deep
+
+scope:
+  allowed_hosts:
+    - localhost
+    - "127.0.0.1"
+  allowed_cidrs: []
+
+rate_limit:
+  requests_per_second: 20.0   # a local lab target can take more load than a real one
+  burst: 40
+  concurrency: 20
+
+safety:
+  authorized: true            # you set this because it's YOUR lab target
+  dry_run: false
+  active_injection_probes: true  # enable XSS/SQLi/SSTI/etc. indicator plugins
+  audit_log_path: audit.log
+
+database:
+  url: sqlite:///websec_assess.db
+  # url: postgresql://websec:websec@localhost:5432/websec_assess  # if using docker-compose --profile postgres
+
+scan:
+  profile: deep
+  output_dir: ./reports
+  timeout_seconds: 15.0
+  user_agent: "websec-assess/0.1 (+authorised-assessment)"
+
+tool_paths:
+  nuclei: nuclei
+  katana: katana
+  httpx: httpx
+  subfinder: subfinder
+  dnsx: dnsx
+  naabu: naabu
+  gau: gau
+  waybackurls: waybackurls

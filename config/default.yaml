@@ -1,0 +1,37 @@
+# Defaults -- equivalent to running websec-assess with no --config at all.
+# Generate a starter file pre-filled with your target via:
+#   websec-assess init --target your-target.example --output websec-assess.yaml
+
+scope:
+  allowed_hosts: []
+  allowed_cidrs: []
+
+rate_limit:
+  requests_per_second: 5.0
+  burst: 10
+  concurrency: 10
+
+safety:
+  authorized: false
+  dry_run: false
+  active_injection_probes: false
+  audit_log_path: audit.log
+
+database:
+  url: sqlite:///websec_assess.db
+
+scan:
+  profile: standard
+  output_dir: ./reports
+  timeout_seconds: 10.0
+  user_agent: "websec-assess/0.1 (+authorised-assessment)"
+
+tool_paths:
+  nuclei: nuclei
+  katana: katana
+  httpx: httpx
+  subfinder: subfinder
+  dnsx: dnsx
+  naabu: naabu
+  gau: gau
+  waybackurls: waybackurls

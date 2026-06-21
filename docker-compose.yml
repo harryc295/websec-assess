@@ -1,0 +1,31 @@
+# Quick start:
+#   docker compose run --rm websec-assess init --target example.com
+#   docker compose run --rm websec-assess scan https://example.com --i-have-authorization
+#
+# Postgres is opt-in (the default config.yaml uses SQLite, which needs no
+# extra service at all -- only switch database.url to the postgres:// form
+# below if you actually want it):
+#   docker compose --profile postgres up -d postgres
+services:
+  websec-assess:
+    build: .
+    image: websec-assess:local
+    volumes:
+      - ./data:/home/wsa/data
+      - ./reports:/home/wsa/reports
+    working_dir: /home/wsa/data
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: websec
+      POSTGRES_PASSWORD: websec
+      POSTGRES_DB: websec_assess
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
