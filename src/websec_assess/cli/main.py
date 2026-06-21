@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.prompt import Confirm, Prompt
 
 from websec_assess.cli.console import console, err_console, print_plugins_table, print_scan_summary, print_scans_table
 from websec_assess.core.config import AppConfig
@@ -16,7 +17,7 @@ from websec_assess.core.db.engine import make_engine, make_session_factory
 from websec_assess.core.db.repository import Repository
 from websec_assess.core.logging import configure_logging
 from websec_assess.core.models import ScanProfile, Target
-from websec_assess.core.plugin import PluginRegistry
+from websec_assess.core.plugin import Plugin, PluginRegistry
 from websec_assess.core.queue import Scheduler
 from websec_assess.core.reporting import render_html, render_json, render_markdown
 from websec_assess.core.safety import AuthorizationError, ScopeError
@@ -110,6 +111,76 @@ scan:
     return 0
 
 
+_DEPTH_TO_PROFILE = {"light": "quick", "full": "standard", "everything": "deep"}
+
+
+def expand_plugin_selection(entries: list[str], all_plugins: list[type[Plugin]]) -> tuple[list[str], list[str]]:
+    """Each entry can be a category (e.g. 'recon') or an exact plugin name
+    (e.g. 'recon.dns_enum'); categories expand to every plugin in them."""
+    categories = {p.category for p in all_plugins}
+    names = {p.name for p in all_plugins}
+    selected: set[str] = set()
+    unknown: list[str] = []
+    for raw in entries:
+        entry = raw.strip()
+        if not entry:
+            continue
+        if entry in categories:
+            selected |= {p.name for p in all_plugins if p.category == entry}
+        elif entry in names:
+            selected.add(entry)
+        else:
+            unknown.append(entry)
+    return sorted(selected), unknown
+
+
+def _interactive_scan_setup(args: argparse.Namespace) -> bool:
+    """Walks through target/depth/tool-selection with prompts instead of
+    requiring flags up front -- triggered by running `scan` with no target.
+    Returns False if the user backs out (e.g. won't confirm authorisation)."""
+    console.print("[bold cyan]Interactive scan setup[/]")
+    console.print("[dim]Tip: pass arguments directly next time to skip this, e.g.:[/]")
+    console.print("[dim]  websec-assess scan https://target.example --profile quick --i-have-authorization[/]")
+    console.print()
+
+    args.target = Prompt.ask(
+        "Target (IP, hostname, or URL -- include [bold]http://[/] if it's not HTTPS)"
+    ).strip()
+    if not args.target:
+        err_console.print("[red]No target entered -- aborting.[/]")
+        return False
+
+    depth = Prompt.ask("Scan depth", choices=list(_DEPTH_TO_PROFILE), default="full")
+    args.profile = _DEPTH_TO_PROFILE[depth]
+
+    PluginRegistry.discover()
+    all_plugins = PluginRegistry.all()
+    args.plugins = None
+    if Confirm.ask("Pick specific tools/categories instead of running the whole profile?", default=False):
+        print_plugins_table(all_plugins)
+        console.print(f"[dim]Categories: {', '.join(sorted({p.category for p in all_plugins}))}[/]")
+        raw = Prompt.ask("Comma-separated plugin names and/or categories to run")
+        names, unknown = expand_plugin_selection(raw.split(","), all_plugins)
+        if unknown:
+            err_console.print(f"[yellow]Ignoring unrecognised entries: {', '.join(unknown)}[/]")
+        if not names:
+            err_console.print("[red]No valid plugins selected -- aborting.[/]")
+            return False
+        args.plugins = ",".join(names)
+
+    args.i_have_authorization = Confirm.ask(
+        "Do you have explicit, documented authorisation to scan this target?", default=False
+    )
+    if not args.i_have_authorization:
+        err_console.print("[red]Authorisation not confirmed -- aborting.[/]")
+        return False
+
+    args.open = Confirm.ask("Open the HTML report in your browser when it's done?", default=True)
+    args.dry_run = False
+    console.print()
+    return True
+
+
 def cmd_plugins(args: argparse.Namespace) -> int:
     PluginRegistry.discover()
     plugins = PluginRegistry.all()
@@ -159,6 +230,9 @@ def _print_next_steps(scan_id: str) -> None:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
+    if not args.target:
+        if not _interactive_scan_setup(args):
+            return 1
     configure_logging(level=args.log_level)
     config = AppConfig.load(args.config)
     if args.dry_run:
@@ -262,7 +336,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_plugins.set_defaults(func=cmd_plugins)
 
     p_scan = sub.add_parser("scan", help="Run a scan against a target")
-    p_scan.add_argument("target", help="Base URL or hostname to scan")
+    p_scan.add_argument(
+        "target", nargs="?", default=None,
+        help="Base URL or hostname to scan. Omit to be prompted interactively.",
+    )
     p_scan.add_argument("--profile", choices=[p.value for p in ScanProfile], default="standard")
     p_scan.add_argument("--plugins", help="Comma-separated plugin names to run instead of the full profile")
     p_scan.add_argument("--format", default="json,markdown,html", help="Comma-separated: json,markdown,html")
