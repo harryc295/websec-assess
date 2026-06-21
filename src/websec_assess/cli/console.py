@@ -59,3 +59,29 @@ def print_plugins_table(plugins: list[type[Plugin]]) -> None:
         profiles = ",".join(sorted(pr.value for pr in p.profiles))
         table.add_row(p.name, p.category, profiles, "yes" if p.requires_active_probes else "no", p.description)
     console.print(table)
+
+
+COMMAND_OVERVIEW: list[tuple[str, str, str]] = [
+    ("scan", "Run a scan. Omit the target to be prompted (target, depth, tool selection).",
+     "websec-assess scan [TARGET] [--profile quick|standard|deep] [--plugins a,b] [--i-have-authorization] [--open] [--dry-run]"),
+    ("init", "Write a starter config file.", "websec-assess init --target HOST [--output FILE] [--force]"),
+    ("resume", "Resume an interrupted scan.", "websec-assess resume SCAN_ID"),
+    ("report", "(Re-)generate reports for a past scan.", "websec-assess report SCAN_ID [--format json,markdown,html] [--output-dir DIR] [--open]"),
+    ("plugins", "List every registered check/plugin.", "websec-assess plugins [--category recon|content_discovery|vuln_assessment|injection|...]"),
+    ("list", "List past scans.", "websec-assess list"),
+    ("menu", "Interactive menu -- also launched by running with no arguments.", "websec-assess menu"),
+    ("help", "Show this overview.", "websec-assess help"),
+]
+
+
+def print_commands_overview() -> None:
+    table = Table(title="websec-assess -- commands")
+    table.add_column("Command")
+    table.add_column("What it does")
+    table.add_column("Usage")
+    for name, desc, usage in COMMAND_OVERVIEW:
+        table.add_row(name, desc, usage)
+    console.print(table)
+    console.print()
+    console.print("[dim]Every command also takes --config FILE. Run `websec-assess <command> --help` for the full flag list.[/]")
+    console.print("[dim]SCAN_ID accepts the short 8-character ID shown in `list` and scan summaries, not just the full one.[/]")
