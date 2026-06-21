@@ -10,6 +10,7 @@ Within a phase, plugins run concurrently.
 from __future__ import annotations
 
 import asyncio
+from typing import Callable
 
 from websec_assess.core.config import AppConfig
 from websec_assess.core.db.repository import Repository
@@ -35,14 +36,23 @@ PHASE_ORDER = [
 ]
 
 
+PluginEvent = Callable[[str, str], None]  # (event, plugin_name) -- "plugin_started"/"plugin_finished"/"plugin_crashed"
+
+
 class Scheduler:
-    def __init__(self, config: AppConfig, repository: Repository) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+        repository: Repository,
+        on_plugin_event: PluginEvent | None = None,
+    ) -> None:
         self.config = config
         self.repo = repository
         self.scope = ScopeChecker(config.scope.allowed_hosts, config.scope.allowed_cidrs)
         self.audit = AuditLog(config.safety.audit_log_path)
         self.rate_limiter = RateLimiter(config.rate_limit.requests_per_second, config.rate_limit.burst)
         self._max_concurrent_plugins = max(1, config.rate_limit.concurrency)
+        self._on_plugin_event = on_plugin_event
 
     def plan(
         self, profile: ScanProfile, plugin_names: list[str] | None = None
@@ -148,6 +158,8 @@ class Scheduler:
             try:
                 plugin = plugin_cls()
                 self.audit.record("plugin_started", scan_id=scan.id, plugin=plugin_cls.name)
+                if self._on_plugin_event:
+                    self._on_plugin_event("plugin_started", plugin_cls.name)
                 result: PluginResult = await plugin.run(ctx)
                 self.repo.save_plugin_result(result, scan.id)
                 self.repo.mark_plugin_completed(scan.id, plugin_cls.name)
@@ -158,8 +170,12 @@ class Scheduler:
                     findings=len(result.findings),
                     errors=len(result.errors),
                 )
+                if self._on_plugin_event:
+                    self._on_plugin_event("plugin_finished", plugin_cls.name)
                 return not result.errors
             except Exception as exc:  # plugin bugs must not take the whole scan down
                 logger.exception("plugin_crashed", extra={"plugin": plugin_cls.name})
                 self.audit.record("plugin_crashed", scan_id=scan.id, plugin=plugin_cls.name, error=str(exc))
+                if self._on_plugin_event:
+                    self._on_plugin_event("plugin_crashed", plugin_cls.name)
                 return False

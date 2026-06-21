@@ -3,9 +3,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+import webbrowser
 from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
+
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
 from websec_assess.cli.console import console, err_console, print_plugins_table, print_scan_summary, print_scans_table
 from websec_assess.core.config import AppConfig
@@ -38,6 +41,20 @@ def open_repository(config: AppConfig):
         yield Repository(session)
     finally:
         session.close()
+
+
+def resolve_scan_id(repo: Repository, id_or_prefix: str) -> str:
+    """Accepts a full scan ID or an unambiguous prefix -- every place this
+    tool prints a scan ID (the summary table, `list`) shows only the first 8
+    characters, so that's what needs to actually work when pasted back in."""
+    if repo.get_scan(id_or_prefix) is not None:
+        return id_or_prefix
+    matches = [s.id for s in repo.list_scans() if s.id.startswith(id_or_prefix)]
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        raise ValueError(f"No scan found matching '{id_or_prefix}'")
+    raise ValueError(f"'{id_or_prefix}' matches {len(matches)} scans -- use a longer prefix")
 
 
 def write_reports(repo: Repository, scan_id: str, formats: list[str], output_dir: Path) -> list[Path]:
@@ -102,6 +119,45 @@ def cmd_plugins(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_with_progress(coro_factory, scheduler: Scheduler, planned_count: int):
+    """Runs a scan/resume coroutine while showing a live spinner + progress
+    bar, ticking once per plugin finished/crashed -- otherwise a multi-phase
+    scan that can legitimately take a minute or two prints nothing at all
+    between the banner and the final table, which looks hung."""
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total} plugins"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Scanning...", total=max(1, planned_count))
+
+        def on_event(event: str, plugin_name: str) -> None:
+            if event == "plugin_started":
+                progress.update(task, description=f"Scanning... ({plugin_name})")
+            elif event in ("plugin_finished", "plugin_crashed"):
+                progress.advance(task)
+
+        scheduler._on_plugin_event = on_event  # noqa: SLF001 -- CLI-only wiring, not public API
+        return asyncio.run(coro_factory())
+
+
+def _maybe_open_report(written: list[Path], should_open: bool) -> None:
+    html_reports = [p for p in written if p.suffix == ".html"]
+    if should_open and html_reports:
+        webbrowser.open(html_reports[0].resolve().as_uri())
+
+
+def _print_next_steps(scan_id: str) -> None:
+    console.print()
+    console.print("[dim]Next steps:[/]")
+    console.print(f"[dim]  websec-assess report {scan_id[:8]} --format html --open   (reopen the report)[/]")
+    console.print("[dim]  websec-assess list                                       (see all scans)[/]")
+    console.print("[dim]  websec-assess plugins                                    (see what ran)[/]")
+
+
 def cmd_scan(args: argparse.Namespace) -> int:
     configure_logging(level=args.log_level)
     config = AppConfig.load(args.config)
@@ -125,8 +181,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
 
     with open_repository(config) as repo:
         scheduler = Scheduler(config, repo)
+        planned_count = len(scheduler.plan(profile, plugin_names))
         try:
-            scan = asyncio.run(scheduler.run_scan(target, profile, plugin_names))
+            scan = _run_with_progress(
+                lambda: scheduler.run_scan(target, profile, plugin_names), scheduler, planned_count
+            )
         except ScopeError as exc:
             err_console.print(f"[red]{exc}[/]")
             return 1
@@ -139,6 +198,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
         written = write_reports(repo, scan.id, formats, Path(config.scan.output_dir))
         for path in written:
             console.print(f"Report written: [bold]{path}[/]")
+        _maybe_open_report(written, args.open)
+        _print_next_steps(scan.id)
     return 0
 
 
@@ -147,21 +208,34 @@ def cmd_resume(args: argparse.Namespace) -> int:
     config = AppConfig.load(args.config)
     PluginRegistry.discover()
     with open_repository(config) as repo:
+        try:
+            scan_id = resolve_scan_id(repo, args.scan_id)
+        except ValueError as exc:
+            err_console.print(f"[red]{exc}[/]")
+            return 1
         scheduler = Scheduler(config, repo)
-        scan = asyncio.run(scheduler.resume_scan(args.scan_id))
+        remaining_count = len(repo.remaining_plugins(scan_id))
+        scan = _run_with_progress(lambda: scheduler.resume_scan(scan_id), scheduler, remaining_count)
         findings = repo.list_findings(scan.id)
         assets = repo.list_assets(scan.id)
         print_scan_summary(scan, findings, assets)
+        _print_next_steps(scan.id)
     return 0
 
 
 def cmd_report(args: argparse.Namespace) -> int:
     config = AppConfig.load(args.config)
     with open_repository(config) as repo:
+        try:
+            scan_id = resolve_scan_id(repo, args.scan_id)
+        except ValueError as exc:
+            err_console.print(f"[red]{exc}[/]")
+            return 1
         formats = args.format.split(",")
-        written = write_reports(repo, args.scan_id, formats, Path(args.output_dir or config.scan.output_dir))
+        written = write_reports(repo, scan_id, formats, Path(args.output_dir or config.scan.output_dir))
         for path in written:
             console.print(f"Report written: [bold]{path}[/]")
+        _maybe_open_report(written, args.open)
     return 0
 
 
@@ -194,6 +268,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_scan.add_argument("--format", default="json,markdown,html", help="Comma-separated: json,markdown,html")
     p_scan.add_argument("--dry-run", action="store_true")
     p_scan.add_argument("--i-have-authorization", action="store_true", help="Confirm you are authorised to test this target")
+    p_scan.add_argument("--open", action="store_true", help="Open the HTML report in your browser when the scan finishes")
     p_scan.add_argument("--log-level", default="INFO")
     p_scan.set_defaults(func=cmd_scan)
 
@@ -206,6 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_report.add_argument("scan_id")
     p_report.add_argument("--format", default="html")
     p_report.add_argument("--output-dir")
+    p_report.add_argument("--open", action="store_true", help="Open the HTML report in your browser")
     p_report.set_defaults(func=cmd_report)
 
     p_list = sub.add_parser("list", help="List past scans")
